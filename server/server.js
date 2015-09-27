@@ -25,8 +25,12 @@ function log(text) {
 
 //Databas
 //config.autoIndex = false;
-mongoose.connect('mongodb://127.0.0.1:27017');
+mongoose.connect('mongodb://127.0.0.1:27017', function(err) {
+    if (err)
+        throw err;
+});
 var User = require('./models/user.js');
+var Post = require('./models/post.js');
 
 //låter oss få data från en POST
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -96,6 +100,34 @@ router.route('/users/:id')
                 res.json({ message: 'User deleted' });
             });
         });
+    });
+
+router.route('/feed')
+    .post(function(req, res) {
+        var post = new Post();
+        post.content = req.body.content;
+        post.location.coordinates = [req.body.longitude, req.body.latitude];
+        post.save(function(err) {
+            if (err)
+                res.send(err);
+            res.json({ message: 'Post created' });
+        });
+    })
+    .get(function(req, res) {
+        Post.find({
+            location: { $near: {
+                $geometry: {
+                    type: "Point" ,
+                    coordinates: [req.query.longitude , req.query.latitude]
+                },
+                $maxDistance: 10000
+            }}
+        }, function(err, posts) {
+            if (err)
+                res.send(err);
+            res.json(posts);
+        })
+        .skip(req.query.skip);
     });
 
 app.use('/', router);
