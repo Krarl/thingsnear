@@ -1,8 +1,8 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var postSchema = new Schema({
-    //user: { type: Schema.ObjectId, ref: 'User' },
+var PostSchema = new Schema({
+    user: { type: Schema.ObjectId, ref: 'User' },
     location: {
         type: {
             type: String,
@@ -11,9 +11,9 @@ var postSchema = new Schema({
         coordinates: [Number],
     },
     date: { type: Date, default: Date.now },
-    content: String
+    content: { type: String, required: true }
 });
 
-postSchema.index({ location: '2dsphere' });
+PostSchema.index({ location: '2dsphere' });
 
-module.exports = mongoose.model('Post', postSchema);
+module.exports = mongoose.model('Post', PostSchema);

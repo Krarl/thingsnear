@@ -43,7 +43,7 @@ var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 var router = express.Router();
 
 router.use(function(req, res, next) {
-    log('Recieved request for ' + req.path);
+    log('Recieved ' + req.method + ' request for ' + req.path);
     next(); //gå vidare till nästa handler
 });
 
@@ -51,10 +51,29 @@ router.get('/test', function(req,  res) {
     res.status(200).json({ message: 'dumdididumdidum!' });
 });
 
+router.post('/login', function(req, res) {
+    async.waterfall([
+        function(callback) {
+            User.findOne({ username: req.body.username }, callback);
+        },
+        function(user, callback) {
+            if (!user) return callback(1);
+            user.comparePassword(req.body.password, callback);
+        }
+    ], function(err, isMatch) {
+        if (err || isMatch === false)
+            res.status(401).set('WWW-Authenticate', 'None').send();
+        else
+            res.status(200).send('THIS_IS_ALMOST_A_TOKEN');
+    });
+});
+
 router.route('/users')
     .post(function(req, res) {
         var user = new User();
-        user.name = req.body.name;
+        user.username = req.body.username;
+        user.password = req.body.password;
+
         user.save(function(err) {
             if (err)
                 res.send(err);
@@ -66,6 +85,13 @@ router.route('/users')
             if (err)
                 res.send(err);
             res.json(users);
+        });
+    })
+    .delete(function(req, res) {
+        //tar bort alla användare
+        User.remove({}, function(err) {
+            if (err) res.send(err);
+            res.json({ message: 'All users deleted, you monster' });
         });
     });
 
