@@ -1,3 +1,2 @@
 * Verifiera alla parametrar som skickas med requests
-* Inloggnings- och autentiseringssystem med tokens
-* Organisera koden på något bra sätt, en enorm server.js funkar inte
+* Standardisera json-svar, success mm.

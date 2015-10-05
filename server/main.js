@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var async = require('async');
 var logging = require('./helpers/logging.js');
+var auth = require('./middleware/auth.js');
 
 //Databas
 //config.autoIndex = false;
@@ -23,7 +24,7 @@ var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 app.use('/', require('./middleware/logging.js'));
 
 //Routes
-app.use('/feed', require('./routes/feed.js'));
+app.use('/feed', auth.verify, require('./routes/feed.js'));
 app.use('/login', require('./routes/login.js'));
 app.use('/users', require('./routes/users.js'));
 
