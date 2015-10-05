@@ -23,12 +23,15 @@ router.route('/')
                 },
                 $maxDistance: 10000
             }}
-        }, function(err, posts) {
+        })
+        .skip(req.query.skip)
+        .sort({ date: -1 })
+        .populate('creator', '-password')
+        .exec(function(err, posts) {
             if (err)
                 res.send(err);
             res.json(posts);
-        })
-        .skip(req.query.skip);
+        });
     });
 
 module.exports = router;
