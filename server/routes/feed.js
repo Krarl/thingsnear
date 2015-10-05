@@ -7,6 +7,7 @@ router.route('/')
         var post = new Post();
         post.content = req.body.content;
         post.location.coordinates = [req.body.longitude, req.body.latitude];
+        post.creator = req.user._id;
         post.save(function(err) {
             if (err)
                 res.send(err);

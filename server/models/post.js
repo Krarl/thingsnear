@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var PostSchema = new Schema({
-    user: { type: Schema.ObjectId, ref: 'User' },
+    creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     location: {
         type: {
             type: String,
