@@ -7,6 +7,7 @@
         "body-parser": "~1.13.3",
         "async": "~1.4.2",
         "bcrypt": "latest",
-        "jsonwebtoken": "~5.4.0"
+        "jsonwebtoken": "~5.4.0",
+        "express-validator": "~2.17.1"
     }
 }

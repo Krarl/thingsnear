@@ -4,6 +4,15 @@ var Post = require('../models/post.js');
 
 router.route('/')
     .post(function(req, res) {
+        req.checkBody('content').notEmpty();
+        req.checkBody('latitude').isDecimal();
+        req.checkBody('longitude').isDecimal();
+        var errors = req.validationErrors();
+        if (errors) {
+            res.status(400).json({ success: false, errors: errors });
+            return;
+        }
+
         var post = new Post();
         post.content = req.body.content;
         post.location.coordinates = [req.body.longitude, req.body.latitude];
@@ -11,10 +20,18 @@ router.route('/')
         post.save(function(err) {
             if (err)
                 res.send(err);
-            res.json({ message: 'Post created' });
+            res.json({ success: true });
         });
     })
     .get(function(req, res) {
+        req.checkQuery('latitude').isDecimal();
+        req.checkQuery('longitude').isDecimal();
+        var errors = req.validationErrors();
+        if (errors) {
+            res.status(400).json({ success: false, errors: errors });
+            return;
+        }
+
         Post.find({
             location: { $near: {
                 $geometry: {
@@ -30,7 +47,7 @@ router.route('/')
         .exec(function(err, posts) {
             if (err)
                 res.send(err);
-            res.json(posts);
+            res.json({ success: true, posts: posts });
         });
     });
 

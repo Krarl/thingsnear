@@ -3,6 +3,7 @@ var app = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var async = require('async');
+var expressValidator = require('express-validator');
 var logging = require('./helpers/logging.js');
 var auth = require('./middleware/auth.js');
 
@@ -16,6 +17,7 @@ mongoose.connect('mongodb://127.0.0.1:27017', function(err) {
 //låter oss få data från en POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(expressValidator());
 
 var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 var ip = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';

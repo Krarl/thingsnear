@@ -12,7 +12,7 @@ router.route('/')
         user.save(function(err) {
             if (err)
                 res.send(err);
-            res.json({ message: 'User created' });
+            res.json({ success: true });
         });
     })
     .get(function(req, res) {
@@ -34,9 +34,10 @@ router.route('/')
 router.route('/:id')
     .get(function(req, res) {
         User.findById(req.params.id, function(err, user) {
-            if (err)
-                res.send(err);
-            res.json(user);
+            if (err || !user)
+                res.status(404).json({ success: false });
+            else
+                res.json({ success: true, user: user });
         });
     })
     .put(function(req, res) {
@@ -48,7 +49,7 @@ router.route('/:id')
                 if (err)
                     res.send(err);
 
-                res.json({ message: 'User updated' });
+                res.json({ success: true, message: 'User updated' });
             });
         });
     })
@@ -59,7 +60,7 @@ router.route('/:id')
             user.remove(function (err) {
                 if (err)
                     res.send(err);
-                res.json({ message: 'User deleted' });
+                res.json({ success: true, message: 'User deleted' });
             });
         });
     });

@@ -6,6 +6,14 @@ var User = require('../models/user.js');
 var config = require('../config.js');
 
 router.post('/', function(req, res) {
+    req.checkBody('username').notEmpty();
+    req.checkBody('password').notEmpty();
+    var errors = req.validationErrors();
+    if (errors) {
+        res.status(400).json({ success: false, errors: errors });
+        return;
+    }
+
     async.waterfall([
         function(callback) {
             User.findOne({ username: req.body.username }, callback);
