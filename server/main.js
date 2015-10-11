@@ -28,6 +28,7 @@ app.use('/', require('./middleware/logging.js'));
 //Routes
 app.use('/feed', auth.verify, require('./routes/feed.js'));
 app.use('/login', require('./routes/login.js'));
+app.use('/test', auth.verify, require('./routes/test.js'));
 app.use('/users', require('./routes/users.js'));
 
 //starta servern
