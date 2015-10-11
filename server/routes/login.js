@@ -26,7 +26,7 @@ router.post('/', function(req, res) {
         }
     ], function(err, isMatch, user) {
         if (err || isMatch === false)
-            res.status(401).set('WWW-Authenticate', 'None').json({ success: false, error: 'Wrong username or password' });
+            res.status(200).json({ success: false, error: 'Wrong username or password' });
         else {
             var msg = {
                 userId: user._id
