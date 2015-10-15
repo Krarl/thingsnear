@@ -1,6 +1,5 @@
 package se.karllundstig.thingsnear;
 
-import android.app.DownloadManager;
 import android.content.Context;
 
 import com.android.volley.Request;

@@ -1,5 +1,7 @@
 package se.karllundstig.thingsnear;
 
+import android.content.Context;
+import android.location.Location;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,6 +14,9 @@ import java.util.concurrent.TimeUnit;
 
 public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
     private ArrayList<Post> data;
+    private Context context;
+    private boolean haveLocation;
+    private Location location;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public CardView cardView;
@@ -21,8 +26,15 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         }
     }
 
-    public FeedAdapter(ArrayList<Post> data) {
+    public FeedAdapter(ArrayList<Post> data, Context context, Location location) {
         this.data = data;
+        this.context = context;
+        setLocation(location);
+    }
+
+    public void setLocation(Location location) {
+        this.haveLocation = true;
+        this.location = location;
     }
 
     @Override
@@ -37,28 +49,27 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         ((TextView)holder.cardView.findViewById(R.id.content)).setText(post.content);
 
         long diff = Calendar.getInstance().getTime().getTime() - post.date.getTime();
-        int seconds = (int)TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS);
-        int minutes = (int)TimeUnit.MINUTES.convert(diff, TimeUnit.MILLISECONDS);
-        int hours = (int)TimeUnit.HOURS.convert(diff, TimeUnit.MILLISECONDS);
-        int days = (int)TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-        int months = days / 30;
-        int years = months / 12;
+        String elapsed = Util.GetTimeLength(diff, context);
 
-        String elapsed;
-        if (years > 0)
-            elapsed = years + " years";
-        else if (months > 0)
-            elapsed = months + " months";
-        else if (days > 0)
-            elapsed = days + " days";
-        else if (hours > 0)
-            elapsed = hours + " hours";
-        else if (minutes > 0)
-            elapsed = minutes + " minutes";
-        else
-            elapsed = seconds + " seconds";
+        String distance = "";
+        if (haveLocation) {
+            double dist = Util.CalculateDistance(location.getLatitude(), location.getLongitude(), post.latitude, post.longitude);
+            distance = ", ";
+            if (dist < 20) {
+                distance += "right here";
+            }
+            else {
+                if (dist >= 20 && dist < 100)
+                    distance += (int)Math.round(dist / 10.0) * 10 + " m";
+                else if (dist >= 100 && dist < 1000)
+                    distance += (int)Math.round(dist / 100.0) * 100 + " m";
+                else
+                    distance += (int)Math.round(dist / 1000.0) + " km";
+                distance += " from here";
+            }
+        }
 
-        ((TextView) holder.cardView.findViewById(R.id.title)).setText(post.creator + " wrote this " + elapsed + " ago");
+        ((TextView) holder.cardView.findViewById(R.id.title)).setText(post.creator + " wrote this " + elapsed + " ago" + distance);
     }
 
     @Override
