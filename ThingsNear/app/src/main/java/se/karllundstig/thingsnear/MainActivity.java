@@ -88,7 +88,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         buildGoogleApiClient();
 
         //laddar vårt token och sätter sen igång hela laddningskedjan
-        loadToken();
+        if (savedInstanceState != null && savedInstanceState.containsKey("posts"))
+            setInstanceState(savedInstanceState);
+        else
+            loadToken();
     }
 
     @Override
@@ -109,6 +112,27 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onResume();
         if (googleApiClient.isConnected())
             startLocationUpdate();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle state) {
+        state.putParcelable("location", location);
+        state.putBoolean("updatingLocation", updatingLocation);
+        state.putString("token", token);
+        state.putParcelable("layoutManager", layoutManager.onSaveInstanceState());
+        state.putParcelableArrayList("posts", adapter.getPosts());
+    }
+
+    private void setInstanceState(Bundle state) {
+        if (state == null)
+            return;
+
+        location = state.getParcelable("location");
+        updatingLocation = state.getBoolean("updatingLocation");
+        token = state.getString("token");
+        layoutManager.onRestoreInstanceState(state.getParcelable("layoutManager"));
+        adapter = new FeedAdapter(state.<Post>getParcelableArrayList("posts"), this, location);
+        feedView.setAdapter(adapter);
     }
 
     private synchronized void buildGoogleApiClient() {
@@ -133,8 +157,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Log.d("MainActivity", "Starting location updates");
         if (!updatingLocation) {
             LocationRequest locationRequest = new LocationRequest();
-            locationRequest.setInterval(5000);
-            locationRequest.setFastestInterval(1000);
+            locationRequest.setInterval(10000);
+            locationRequest.setFastestInterval(5000);
             locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
 

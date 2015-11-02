@@ -37,6 +37,10 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         this.location = location;
     }
 
+    public ArrayList<Post> getPosts() {
+        return data;
+    }
+
     @Override
     public FeedAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         CardView v = (CardView)LayoutInflater.from(parent.getContext()).inflate(R.layout.post, parent, false);
