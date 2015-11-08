@@ -120,7 +120,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         state.putBoolean("updatingLocation", updatingLocation);
         state.putString("token", token);
         state.putParcelable("layoutManager", layoutManager.onSaveInstanceState());
-        state.putParcelableArrayList("posts", adapter.getPosts());
+        if (adapter != null)
+            state.putParcelableArrayList("posts", adapter.getPosts());
     }
 
     private void setInstanceState(Bundle state) {
