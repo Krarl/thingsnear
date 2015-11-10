@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,11 +15,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -32,15 +26,13 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Locale;
 import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     //nätverk
     NetQueue netQueue;
     String server;
-    String token;
 
     //location
     GoogleApiClient googleApiClient;
@@ -62,15 +54,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                
             }
         });
 
@@ -118,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onSaveInstanceState(Bundle state) {
         state.putParcelable("location", location);
         state.putBoolean("updatingLocation", updatingLocation);
-        state.putString("token", token);
+        state.putString("token", netQueue.getToken());
         state.putParcelable("layoutManager", layoutManager.onSaveInstanceState());
         if (adapter != null)
             state.putParcelableArrayList("posts", adapter.getPosts());
@@ -130,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         location = state.getParcelable("location");
         updatingLocation = state.getBoolean("updatingLocation");
-        token = state.getString("token");
+        netQueue.setToken(state.getString("token"));
         layoutManager.onRestoreInstanceState(state.getParcelable("layoutManager"));
         adapter = new FeedAdapter(state.<Post>getParcelableArrayList("posts"), this, location);
         feedView.setAdapter(adapter);
@@ -206,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (adapter != null) {
             adapter.setLocation(location);
             adapter.notifyDataSetChanged();
-        } else if (!loadingFeed && token != null) {
+        } else if (!loadingFeed && netQueue.getToken() != null) {
             loadFeed();
         }
     }
@@ -217,38 +208,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             //vi har inget token, dags att logga in
             login();
         } else {
-            token = settings.getString("token", "");
+            netQueue.setToken(settings.getString("token", ""));
             //testa om det fortfarande är giltigt
-            Request request = new JsonObjectRequest(Request.Method.GET, server + "/test", null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            if (response.getBoolean("success")) {
-                                if (!loadingFeed && location != null)
-                                    loadFeed();
-                            } else {
-                                login();
-                            }
-                        } catch(Exception e) {
-                            Log.e("MainActivity)", e.getMessage());
-                        }
-                    }
-                }, new Response.ErrorListener() {
+            netQueue.get("/test", new NetQueue.RequestCallback() {
                 @Override
-                public void onErrorResponse(VolleyError error) {
+                public void onFinished(JSONObject result) {
+                    if (!loadingFeed && location != null)
+                        loadFeed();
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e("MainActivity", error);
                     login();
                 }
-            }) {
-                @Override
-                public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("x-access-token", token);
-                    return params;
-                }
-            };
-
-            netQueue.add(request);
+            });
         }
     }
 
@@ -259,55 +233,46 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return;
         loadingFeed = true;
 
-        String url = String.format(server + "/feed?longitude=%f&latitude=%f", location.getLongitude(), location.getLatitude());
-        Request request = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
+        String query = String.format("/feed?longitude=%f&latitude=%f", location.getLongitude(), location.getLatitude());
+
+        netQueue.get(query, new NetQueue.RequestCallback() {
+            @Override
+            public void onFinished(JSONObject result) {
+                try {
+                    JSONArray data = result.getJSONArray("posts");
+                    ArrayList<Post> posts = new ArrayList<>();
+
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'", Locale.US);
+                    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+                    for (int i = 0; i < data.length(); ++i) {
                         try {
-                            JSONArray data = response.getJSONArray("posts");
-                            ArrayList<Post> posts = new ArrayList<>();
-
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'");
-                            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-                            for (int i = 0; i < data.length(); ++i) {
-                                try {
-                                    Post p = new Post();
-                                    p.content = data.getJSONObject(i).getString("content");
-                                    p.creator = data.getJSONObject(i).getJSONObject("creator").getString("username");
-                                    p.date = dateFormat.parse(data.getJSONObject(i).getString("date"));
-                                    p.longitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(0);
-                                    p.latitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(1);
-                                    posts.add(p);
-                                } catch(Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            adapter = new FeedAdapter(posts, context, location);
-                            feedView.setAdapter(adapter);
-                            loadingFeed = false;
+                            Post p = new Post();
+                            p.content = data.getJSONObject(i).getString("content");
+                            p.creator = data.getJSONObject(i).getJSONObject("creator").getString("username");
+                            p.date = dateFormat.parse(data.getJSONObject(i).getString("date"));
+                            p.longitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(0);
+                            p.latitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(1);
+                            posts.add(p);
                         } catch(Exception e) {
-                            loadingFeed = false;
                             e.printStackTrace();
                         }
                     }
-                }, new Response.ErrorListener() {
+                    adapter = new FeedAdapter(posts, context, location);
+                    feedView.setAdapter(adapter);
+                    loadingFeed = false;
+                } catch(Exception e) {
+                    loadingFeed = false;
+                    e.printStackTrace();
+                }
+            }
+
             @Override
-            public void onErrorResponse(VolleyError error) {
+            public void onError(String error) {
                 loadingFeed = false;
                 login();
             }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("x-access-token", token);
-                return params;
-            }
-        };
-
-        netQueue.add(request);
+        });
     }
 
     private void login() {

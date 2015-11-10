@@ -19,11 +19,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -127,7 +122,34 @@ public class LoginActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            Request request = new JsonObjectRequest(Request.Method.POST, server + "/login", body,
+            NetQueue.getInstance(this).post("/login", body, new NetQueue.RequestCallback() {
+                @Override
+                public void onFinished(JSONObject result) {
+                    try {
+                        SharedPreferences settings = getSharedPreferences("prefs", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putString("token", result.getString("token"));
+                        editor.apply();
+                        launchMain();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    showProgress(false);
+                    if (error.equals("Wrong username or password")) {
+                        passwordView.setError(getString(R.string.error_incorrect_login));
+                        passwordView.requestFocus();
+                    } else {
+                        Toast.makeText(context, "Connection error", Toast.LENGTH_LONG).show();
+                        Log.e("LoginActivity", error);
+                    }
+                }
+            });
+
+            /*Request request = new JsonObjectRequest(Request.Method.POST, server + "/login", body,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -156,7 +178,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
 
-            NetQueue.getInstance(this).add(request);
+            NetQueue.getInstance(this).add(request);*/
         }
     }
 
