@@ -148,37 +148,6 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 }
             });
-
-            /*Request request = new JsonObjectRequest(Request.Method.POST, server + "/login", body,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        showProgress(false);
-                        try {
-                            if (response.getBoolean("success")) {
-                                SharedPreferences settings = getSharedPreferences("prefs", MODE_PRIVATE);
-                                SharedPreferences.Editor editor = settings.edit();
-                                editor.putString("token", response.getString("token"));
-                                editor.apply();
-                                launchMain();
-                            } else {
-                                passwordView.setError(getString(R.string.error_incorrect_login));
-                                passwordView.requestFocus();
-                            }
-                        } catch(Exception e) {
-                            Log.e("LoginActivity", e.getMessage());
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                @Override
-                    public void onErrorResponse(VolleyError error) {
-                        showProgress(false);
-                        Toast.makeText(context, "Connection error", Toast.LENGTH_LONG).show();
-                        Log.e("LoginActivity", error.toString());
-                    }
-                });
-
-            NetQueue.getInstance(this).add(request);*/
         }
     }
 

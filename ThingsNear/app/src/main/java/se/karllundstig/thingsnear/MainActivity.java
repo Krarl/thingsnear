@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     RecyclerView feedView;
     FeedAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
+    FloatingActionButton fab;
 
     private Context context;
 
@@ -57,14 +58,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton)findViewById(R.id.fab);
+        fab.setEnabled(false);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                
+                Intent intent = new Intent(context, TextPostActivity.class);
+                intent.putExtra("location", location);
+                startActivity(intent);
             }
         });
-
 
         feedView = (RecyclerView)findViewById(R.id.feed);
         feedView.setHasFixedSize(true); //den ändrar inte storlek, gör det tydligen snabbare med dt här
@@ -192,14 +195,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onLocationChanged(Location location) {
-        this.location = location;
         Log.d("MainActivity", "Recieved location: " + location.toString());
+        this.location = location;
+
         if (adapter != null) {
             adapter.setLocation(location);
             adapter.notifyDataSetChanged();
         } else if (!loadingFeed && netQueue.getToken() != null) {
             loadFeed();
         }
+
+        fab.setEnabled(true);
     }
 
     private void loadToken() {

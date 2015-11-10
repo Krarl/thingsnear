@@ -48,12 +48,6 @@ public class NetQueue {
     public void setToken(String token) {
         NetQueue.token = token;
         Log.i("NetQueue", "Token set to " + token);
-        try {
-            if (token == null)
-                throw new IllegalArgumentException();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public String getToken() {
@@ -96,7 +90,11 @@ public class NetQueue {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                callback.onError(error.toString());
+                if (error.toString().equals("com.android.volley.TimeoutError")) {
+                    callback.onError("Could not connect to server");
+                } else {
+                    callback.onError(error.toString());
+                }
             }
         }) {
             @Override
