@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     FeedAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
     FloatingActionButton fab;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     private Context context;
 
@@ -71,6 +73,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         feedView = (RecyclerView)findViewById(R.id.feed);
         feedView.setHasFixedSize(true); //den ändrar inte storlek, gör det tydligen snabbare med dt här
+
+        swipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadFeed();
+            }
+        });
 
         layoutManager = new LinearLayoutManager(this);
         feedView.setLayoutManager(layoutManager);
@@ -201,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (adapter != null) {
             adapter.setLocation(location);
             adapter.notifyDataSetChanged();
-        } else if (!loadingFeed && netQueue.getToken() != null) {
+        } else {
             loadFeed();
         }
 
@@ -219,8 +229,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             netQueue.get("/test", new NetQueue.RequestCallback() {
                 @Override
                 public void onFinished(JSONObject result) {
-                    if (!loadingFeed && location != null)
-                        loadFeed();
+                    loadFeed();
                 }
 
                 @Override
@@ -228,14 +237,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     Log.e("MainActivity", error);
                     login();
                 }
+
+                @Override
+                public void onFinally() {}
             });
         }
     }
 
     boolean loadingFeed = false;
     private void loadFeed() {
-        //det är dumt att ladda den igen om den inte har laddat färdigt
-        if (loadingFeed)
+        //det är dumt att ladda den igen om den inte har laddat färdigt, eller om vi inte har några koordinater, eller om vi inte har ett token
+        if (loadingFeed || location == null || netQueue.getToken() == null)
             return;
         loadingFeed = true;
 
@@ -266,17 +278,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     }
                     adapter = new FeedAdapter(posts, context, location);
                     feedView.setAdapter(adapter);
-                    loadingFeed = false;
                 } catch(Exception e) {
-                    loadingFeed = false;
                     e.printStackTrace();
                 }
             }
 
             @Override
             public void onError(String error) {
-                loadingFeed = false;
                 login();
+            }
+
+            @Override
+            public void onFinally() {
+                loadingFeed = false;
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
     }

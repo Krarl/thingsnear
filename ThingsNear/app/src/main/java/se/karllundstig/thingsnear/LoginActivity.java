@@ -147,6 +147,9 @@ public class LoginActivity extends AppCompatActivity {
                         Log.e("LoginActivity", error);
                     }
                 }
+
+                @Override
+                public void onFinally() {}
             });
         }
     }

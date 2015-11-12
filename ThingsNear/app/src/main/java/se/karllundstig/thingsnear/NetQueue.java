@@ -57,6 +57,7 @@ public class NetQueue {
     public interface RequestCallback {
         void onFinished(JSONObject result);
         void onError(String error);
+        void onFinally();
     }
 
     public void get(String query, final RequestCallback callback) {
@@ -86,6 +87,7 @@ public class NetQueue {
                             Log.e("NetQueue", e.getMessage());
                             callback.onError(e.getMessage());
                         }
+                        callback.onFinally();
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -95,6 +97,7 @@ public class NetQueue {
                 } else {
                     callback.onError(error.toString());
                 }
+                callback.onFinally();
             }
         }) {
             @Override

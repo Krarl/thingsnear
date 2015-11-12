@@ -72,14 +72,17 @@ public class TextPostActivity extends AppCompatActivity {
                 netQueue.post("/feed", body, new NetQueue.RequestCallback() {
                     @Override
                     public void onFinished(JSONObject result) {
-                        progress.dismiss();
                         finish();
                     }
 
                     @Override
                     public void onError(String error) {
-                        progress.dismiss();
                         Toast.makeText(context, error, Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onFinally() {
+                        progress.dismiss();
                     }
                 });
             }
