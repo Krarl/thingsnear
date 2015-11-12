@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -14,21 +15,27 @@ import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class NetQueue {
     private static NetQueue instance;
-    private static Context context;
-    private static String server;
-    private static String token;
+    private Context context;
+    private String server;
+    private String token;
     private RequestQueue requestQueue;
+    private long serverDelta;
 
     private NetQueue(Context context) {
-        NetQueue.context = context;
+        this.context = context;
         requestQueue = getRequestQueue();
         token = "";
         server = context.getString(R.string.server);
+        serverDelta = 0;
     }
 
     public static synchronized NetQueue getInstance(Context context) {
@@ -46,12 +53,16 @@ public class NetQueue {
     }
 
     public void setToken(String token) {
-        NetQueue.token = token;
+        this.token = token;
         Log.i("NetQueue", "Token set to " + token);
     }
 
     public String getToken() {
         return token;
+    }
+
+    public long getServerDelta() {
+        return serverDelta;
     }
 
     public interface RequestCallback {
@@ -73,6 +84,7 @@ public class NetQueue {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+
                         try {
                             if (response.getBoolean("success")) {
                                 callback.onFinished(response);
@@ -100,6 +112,16 @@ public class NetQueue {
                 callback.onFinally();
             }
         }) {
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                try {
+                    serverDelta = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).parse(response.headers.get("Date")).getTime() - Calendar.getInstance().getTime().getTime();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                return super.parseNetworkResponse(response);
+            }
+
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> params = new HashMap<>();

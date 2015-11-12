@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     FloatingActionButton fab;
     SwipeRefreshLayout swipeRefreshLayout;
 
-    private Context context;
+    Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

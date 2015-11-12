@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
+import java.util.Date;
 
 public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
     private ArrayList<Post> data;
@@ -52,7 +52,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.ViewHolder> {
         Post post = data.get(position);
         ((TextView)holder.cardView.findViewById(R.id.content)).setText(post.content);
 
-        long diff = Calendar.getInstance().getTime().getTime() - post.date.getTime();
+        long diff = Calendar.getInstance().getTime().getTime() - post.date.getTime() + NetQueue.getInstance(context).getServerDelta();
         String elapsed = Util.GetTimeLength(diff, context);
 
         String distance = "";
