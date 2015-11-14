@@ -8,11 +8,11 @@ exports.verify = function(req, res, next) {
     if (token) {
         jwt.verify(token, config.secret_jwt, function(err, decoded) {
             if (err) {
-                res.status(403).json({ success: false, msg: 'Invalid login token' });
+                res.status(403).json({ success: false, error: 'Invalid login token' });
             } else {
                 User.findById(decoded.userId, function(err, user) {
                     if (err)
-                        res.status(403).json({ success: false, msg: 'User cannot be found' });
+                        res.status(403).json({ success: false, error: 'User cannot be found' });
                     else {
                         req.user = user;
                         next();
@@ -21,6 +21,6 @@ exports.verify = function(req, res, next) {
             }
         });
     } else {
-        res.status(403).json({ success: false, msg: 'No login token provided' });
+        res.status(403).json({ success: false, error: 'No login token provided' });
     }
 };

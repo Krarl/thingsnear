@@ -10,7 +10,7 @@ router.post('/', function(req, res) {
     req.checkBody('password').notEmpty();
     var errors = req.validationErrors();
     if (errors) {
-        res.status(400).json({ success: false, errors: errors });
+        res.status(400).json({ success: false, error: errors });
         return;
     }
 

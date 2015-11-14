@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -23,14 +24,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
+    private Context context;
+
+    //UI
     private EditText usernameView;
     private EditText passwordView;
     private View progressView;
     private View loginFormView;
-
-    private Context context;
-
-    String server;
+    TextView register;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
         this.context = this;
-        server = getString(R.string.server);
 
         // Set up the login form.
         usernameView = (AutoCompleteTextView) findViewById(R.id.username);
@@ -65,6 +65,16 @@ public class LoginActivity extends AppCompatActivity {
 
         loginFormView = findViewById(R.id.login_form);
         progressView = findViewById(R.id.login_progress);
+
+        register = (TextView)findViewById(R.id.register);
+        register.setPaintFlags(register.getPaintFlags()| Paint.UNDERLINE_TEXT_FLAG);
+        register.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(context, RegisterActivity.class);
+                startActivity(i);
+            }
+        });
     }
 
     private void launchMain() {
@@ -90,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
         View focusView = null;
 
         //kollar efter giltigt lösenord
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (!TextUtils.isEmpty(password) && !Verification.isPasswordValid(password)) {
             passwordView.setError(getString(R.string.error_invalid_password));
             focusView = passwordView;
             cancel = true;
@@ -101,7 +111,7 @@ public class LoginActivity extends AppCompatActivity {
             usernameView.setError(getString(R.string.error_field_required));
             focusView = usernameView;
             cancel = true;
-        } else if (!isUsernameValid(username)) {
+        } else if (!Verification.isUsernameValid(username)) {
             usernameView.setError(getString(R.string.error_invalid_username));
             focusView = usernameView;
             cancel = true;
@@ -143,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                         passwordView.setError(getString(R.string.error_incorrect_login));
                         passwordView.requestFocus();
                     } else {
-                        Toast.makeText(context, "Connection error", Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, error, Toast.LENGTH_LONG).show();
                         Log.e("LoginActivity", error);
                     }
                 }
@@ -152,15 +162,6 @@ public class LoginActivity extends AppCompatActivity {
                 public void onFinally() {}
             });
         }
-    }
-
-    private boolean isUsernameValid(String username) {
-        //tillåt inte flera ord eller mellanslag
-        return !username.contains(" ");
-    }
-
-    private boolean isPasswordValid(String password) {
-        return password.length() >= 6;
     }
 
     //visar laddningssymbol och gömmer UI

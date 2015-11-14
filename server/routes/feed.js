@@ -9,7 +9,7 @@ router.route('/')
         req.checkBody('longitude').isDecimal();
         var errors = req.validationErrors();
         if (errors) {
-            res.status(400).json({ success: false, errors: errors });
+            res.status(400).json({ success: false, error: errors });
             return;
         }
 
@@ -28,7 +28,7 @@ router.route('/')
         req.checkQuery('longitude').isDecimal();
         var errors = req.validationErrors();
         if (errors) {
-            res.status(400).json({ success: false, errors: errors });
+            res.status(400).json({ success: false, error: errors });
             return;
         }
 

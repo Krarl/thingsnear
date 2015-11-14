@@ -5,10 +5,13 @@
     <!-- Strings related to login -->
     <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
+    <string name="prompt_email">Email</string>
     <string name="action_sign_in">Sign in</string>
+    <string name="action_register">Create Account</string>
     <string name="error_invalid_username">This username is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_login">Invalid login</string>
+    <string name="error_invalid_email">This not a valid email address</string>
+    <string name="error_incorrect_login">Wrong username or password</string>
     <string name="error_field_required">This field is required</string>
     <string name="permission_rationale">"Contacts permissions are needed for providing email completions."
     </string>
