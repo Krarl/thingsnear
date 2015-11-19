@@ -1,6 +1,6 @@
 {
-    "name": "thingsnear-api",
-    "main": "server.js",
+    "name": "thingsnear",
+    "main": "main.js",
     "dependencies": {
         "express": "~4.13.3",
         "mongoose": "~4.1.7",
