@@ -16,7 +16,7 @@ router.post('/', function(req, res) {
 
     async.waterfall([
         function(callback) {
-            User.findOne({ username: req.body.username }, callback);
+            User.findOne({ username: req.body.username }, { password: 1 }, callback);
         },
         function(user, callback) {
             if (!user) return callback(1);
