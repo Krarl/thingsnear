@@ -23,6 +23,9 @@ mongoose.connect(config.mongo_connection_string, function(err) {
         app.use(bodyParser.json());
         app.use(expressValidator());
 
+        //redirecta http till https
+        app.use('/', require('./middleware/https.js'));
+
         //logga alla requests
         app.use('/', require('./middleware/logging.js'));
 
