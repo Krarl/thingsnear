@@ -24,9 +24,6 @@ router.route('/')
         //skapa först bilden i databasen
         //spara den sen i en imagemapp med id från databasen
 
-        var image = new Image();
-        //image.creator = req.user._id;
-
         async.waterfall([
             //tar emot filen
             function(callback) {
@@ -50,6 +47,11 @@ router.route('/')
             },
             //skapar en entry i databasen
             function(callback) {
+                var image = new Image();
+                image.creator = req.user._id;
+                image.mimetype = req.file.mimetype;
+                image.filesize = req.file.size;
+
                 image.save(function(err) {
                     if (err) {
                         log.error('Error on create image: ' + err);
@@ -72,22 +74,47 @@ router.route('/')
             }
         ], function(err) {
             if (err) {
+                //tar bort filen, om den skapats
+                fs.unlink(req.file.path, function(err) {});
                 res.status(500).json({ success: false, error: err });
             } else {
                 res.status(200).json({ success: true });
             }
         });
-
     });
 
-//test-route för att ladda upp bilder via webbläsare
-router.get('/test', function(req, res) {
-    res.send(
-        '<form action="/images" method="post" enctype="multipart/form-data">' +
-        '<input type="file" name="image">' +
-        '<input type="submit" value="Ladda upp">' +
-        '</form>'
-    );
+router.get('/:id', function(req, res) {
+    async.waterfall([
+        //hämtar den från databasen
+        function(callback) {
+            Image.findById(req.params.id, function(err, image) {
+                if (err | !image) {
+                    log.error('Database error: ' + err);
+                    callback(err);
+                } else {
+                    callback(null, image);
+                }
+            });
+        },
+        function(image, callback) {
+            var options = {
+                root: config.image_dir + '/',
+                headers: { 'Content-Type': image.mimetype }
+            };
+            res.sendFile(image._id, options, function(err) {
+                if (err) {
+                    log.error(err);
+                    callback('File not found');
+                } else {
+                    callback(null);
+                }
+            });
+        }
+    ], function(err) {
+        if (err) {
+            res.status(404).json({ success: false, error: err });
+        }
+    });
 });
 
 module.exports = router;
