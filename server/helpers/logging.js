@@ -15,3 +15,5 @@ function getPrettyTime() {
 exports.log = function(text) {
     console.log(getPrettyTime() + ': ' + text);
 };
+
+exports.error = exports.log;

@@ -2,7 +2,8 @@ module.exports = {
     secret_jwt: "sldgkjsoiunvnei213214",
     server_ip: process.env.OPENSHIFT_NODEJS_IP || undefined,
     server_port: process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    mongo_connection_string: 'mongodb://127.0.0.1:27017'
+    mongo_connection_string: 'mongodb://127.0.0.1:27017',
+    image_dir: 'C:/Users/edu97250/Desktop/images/'
 };
 
 //Are we running on openshift? Then use the appropiate mongo variables

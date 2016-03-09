@@ -21,6 +21,8 @@ mongoose.connect(config.mongo_connection_string, function(err) {
         //låter oss få data från en POST
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
+
+        //låter oss validera parametrar
         app.use(expressValidator());
 
         //redirecta http till https
@@ -34,6 +36,7 @@ mongoose.connect(config.mongo_connection_string, function(err) {
         app.use('/login', require('./routes/login.js'));
         app.use('/test', auth.verify, require('./routes/test.js'));
         app.use('/users', require('./routes/users.js'));
+        app.use('/images', require('./routes/images.js'));
 
         var ip = config.server_ip;
         var port = config.server_port;

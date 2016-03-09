@@ -8,6 +8,7 @@
         "async": "~1.4.2",
         "bcrypt": "latest",
         "jsonwebtoken": "~5.4.0",
-        "express-validator": "~2.17.1"
+        "express-validator": "~2.17.1",
+        "multer": "latest"
     }
 }
