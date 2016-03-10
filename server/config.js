@@ -6,7 +6,7 @@ module.exports = {
     image_dir: 'C:/Users/edu97250/Desktop/images/'
 };
 
-//Are we running on openshift? Then use the appropiate mongo variables
+//Are we running on openshift? Then use the appropiate mongo variables and directory folder
 if (process.env.OPENSHIFT_MONGODB_DB_PASSWORD) {
     module.exports.mongo_connection_string =
         process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
@@ -14,4 +14,6 @@ if (process.env.OPENSHIFT_MONGODB_DB_PASSWORD) {
         process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
         process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
         process.env.OPENSHIFT_APP_NAME;
+
+    module.exports.image_dir = process.env.OPENSHIFT_DATA_DIR + '/images/';
 }
