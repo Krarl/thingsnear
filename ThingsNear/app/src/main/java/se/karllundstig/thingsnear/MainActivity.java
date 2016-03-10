@@ -36,6 +36,7 @@ import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -91,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             public void onClick(View view) {
                 Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-
                     //Skapar en fil att spara fotot till
                     File photoFile = null;
                     try {
@@ -162,8 +162,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         state.putString("token", netQueue.getToken());
         state.putParcelable("layoutManager", layoutManager.onSaveInstanceState());
         state.putString("capturedImage", capturedImage);
-        if (adapter != null)
+        if (adapter != null) {
+            state.putSerializable("images", adapter.getImages());
             state.putParcelableArrayList("posts", adapter.getPosts());
+        }
     }
 
     private void setInstanceState(Bundle state) {
@@ -175,36 +177,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         netQueue.setToken(state.getString("token"));
         layoutManager.onRestoreInstanceState(state.getParcelable("layoutManager"));
         capturedImage = state.getString("capturedImage");
-        adapter = new FeedAdapter(state.<Post>getParcelableArrayList("posts"), this, location);
+        adapter = new FeedAdapter(state.<Post>getParcelableArrayList("posts"), (HashMap<String, Bitmap>)state.getSerializable("images"), this, location);
         feedView.setAdapter(adapter);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CAPTURE_IMAGE && resultCode == RESULT_OK && capturedImage != null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        final String response = FileUploader.sendFile(netQueue.getServer() + "/images/", capturedImage, netQueue.getToken(), "image", "image/jpeg");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(context, response, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    } catch (Exception err) {
-                        final Exception e = err;
-                        e.printStackTrace();
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                }
-            }).start();
+            Intent intent = new Intent(context, ImagePostActivity.class);
+            intent.putExtra("location", location);
+            intent.putExtra("imagePath", capturedImage);
+            startActivity(intent);
         }
     }
 
@@ -337,6 +320,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             Post p = new Post();
                             p.content = data.getJSONObject(i).getString("content");
                             p.creator = data.getJSONObject(i).getJSONObject("creator").getString("username");
+                            if (data.getJSONObject(i).has("image"))
+                                p.image = data.getJSONObject(i).getString("image");
+                            else
+                                p.image = "";
                             p.date = dateFormat.parse(data.getJSONObject(i).getString("date"));
                             p.longitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(0);
                             p.latitude = data.getJSONObject(i).getJSONObject("location").getJSONArray("coordinates").getDouble(1);
@@ -345,8 +332,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             e.printStackTrace();
                         }
                     }
-                    adapter = new FeedAdapter(posts, context, location);
-                    feedView.setAdapter(adapter);
+                    if (adapter == null) {
+                        adapter = new FeedAdapter(posts, new HashMap<String, Bitmap>(), context, location);
+                        feedView.setAdapter(adapter);
+                    } else {
+                        adapter.setPosts(posts);
+                        adapter.notifyDataSetChanged();
+                    }
                 } catch(Exception e) {
                     e.printStackTrace();
                 }

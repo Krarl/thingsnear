@@ -11,7 +11,8 @@ var PostSchema = new Schema({
         coordinates: [Number],
     },
     date: { type: Date, default: Date.now },
-    content: { type: String, required: true }
+    content: { type: String },
+    image: { type: Schema.Types.ObjectId, ref: 'Image', default: null }
 });
 
 PostSchema.index({ location: '2dsphere' });

@@ -65,11 +65,11 @@ router.route('/')
                         log.error('Error saving image: ' + err);
                         return callback('Unknkown error saving image');
                     } else {
-                        return callback(null);
+                        return callback(null, id);
                     }
                 });
             }
-        ], function(err) {
+        ], function(err, id) {
             if (err) {
                 //tar bort filen, om den skapats
                 if (req.file) {
@@ -77,7 +77,7 @@ router.route('/')
                 }
                 res.status(500).json({ success: false, error: err });
             } else {
-                res.status(200).json({ success: true });
+                res.status(200).json({ success: true, image: id });
             }
         });
     });

@@ -38,6 +38,11 @@
             android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
+            android:name=".ImagePostActivity"
+            android:label="New image post"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+        <activity
             android:name=".RegisterActivity"
             android:label="@string/action_register">
         </activity>

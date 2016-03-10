@@ -1,26 +1,38 @@
 var express = require('express');
 var router = express.Router();
 var Post = require('../models/post.js');
+var log = require('../helpers/logging.js');
 
 router.route('/')
     .post(function(req, res) {
-        req.checkBody('content').notEmpty();
         req.checkBody('latitude').isDecimal();
         req.checkBody('longitude').isDecimal();
         var errors = req.validationErrors();
+        if (!req.body.content && !req.body.image) {
+            errors.push('Post needs content');
+        }
+
         if (errors) {
             res.status(400).json({ success: false, error: errors });
             return;
         }
 
         var post = new Post();
-        post.content = req.body.content;
+        if (req.body.content) {
+            post.content = req.body.content;
+        }
+        if (req.body.image) {
+            post.image = req.body.image;
+        }
         post.location.coordinates = [req.body.longitude, req.body.latitude];
         post.creator = req.user._id;
         post.save(function(err) {
-            if (err)
-                res.send(err);
-            res.json({ success: true });
+            if (err) {
+                log.error('Error saving post: ' + err);
+                res.json({ success: false, error: 'Error saving post' });
+            } else {
+                res.json({ success: true });
+            }
         });
     })
     .get(function(req, res) {

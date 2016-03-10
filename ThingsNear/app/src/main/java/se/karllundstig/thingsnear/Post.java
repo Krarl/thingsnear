@@ -8,6 +8,7 @@ import java.util.Date;
 public class Post implements Parcelable {
     String content;
     String creator;
+    String image;
     Date date;
     double latitude;
     double longitude;
@@ -17,6 +18,7 @@ public class Post implements Parcelable {
     protected Post(Parcel in) {
         content = in.readString();
         creator = in.readString();
+        image = in.readString();
         long tmpDate = in.readLong();
         date = tmpDate != -1 ? new Date(tmpDate) : null;
         latitude = in.readDouble();
@@ -32,6 +34,7 @@ public class Post implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(content);
         dest.writeString(creator);
+        dest.writeString(image);
         dest.writeLong(date != null ? date.getTime() : -1L);
         dest.writeDouble(latitude);
         dest.writeDouble(longitude);
