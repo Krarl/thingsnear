@@ -4,8 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -25,8 +29,13 @@ import com.google.android.gms.location.LocationServices;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -44,10 +53,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     RecyclerView feedView;
     FeedAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
-    FloatingActionButton fab;
+    FloatingActionButton fabText;
+    FloatingActionButton fabImage;
     SwipeRefreshLayout swipeRefreshLayout;
 
     Context context;
+    static final int REQUEST_CAPTURE_IMAGE = 1;
+    String capturedImage;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,14 +73,38 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        fab = (FloatingActionButton)findViewById(R.id.fab);
-        fab.setEnabled(false);
-        fab.setOnClickListener(new View.OnClickListener() {
+        fabText = (FloatingActionButton)findViewById(R.id.fabText);
+        fabText.setEnabled(false);
+        fabText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(context, TextPostActivity.class);
                 intent.putExtra("location", location);
                 startActivity(intent);
+            }
+        });
+
+        fabImage = (FloatingActionButton)findViewById(R.id.fabImage);
+        fabImage.setEnabled(false);
+        fabImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+
+                    //Skapar en fil att spara fotot till
+                    File photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+                    } catch (IOException ex) {
+                        Toast.makeText(context, "Error creating an image file", Toast.LENGTH_LONG).show();
+                    }
+
+                    if (photoFile != null) {
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                        startActivityForResult(takePictureIntent, REQUEST_CAPTURE_IMAGE);
+                    }
+                }
             }
         });
 
@@ -124,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         state.putBoolean("updatingLocation", updatingLocation);
         state.putString("token", netQueue.getToken());
         state.putParcelable("layoutManager", layoutManager.onSaveInstanceState());
+        state.putString("capturedImage", capturedImage);
         if (adapter != null)
             state.putParcelableArrayList("posts", adapter.getPosts());
     }
@@ -136,8 +174,38 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         updatingLocation = state.getBoolean("updatingLocation");
         netQueue.setToken(state.getString("token"));
         layoutManager.onRestoreInstanceState(state.getParcelable("layoutManager"));
+        capturedImage = state.getString("capturedImage");
         adapter = new FeedAdapter(state.<Post>getParcelableArrayList("posts"), this, location);
         feedView.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CAPTURE_IMAGE && resultCode == RESULT_OK && capturedImage != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        final String response = FileUploader.sendFile(netQueue.getServer() + "/images/", capturedImage, netQueue.getToken(), "image", "image/jpeg");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(context, response, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    } catch (Exception err) {
+                        final Exception e = err;
+                        e.printStackTrace();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }
+            }).start();
+        }
     }
 
     private synchronized void buildGoogleApiClient() {
@@ -215,7 +283,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             loadFeed();
         }
 
-        fab.setEnabled(true);
+        fabText.setEnabled(true);
+        fabImage.setEnabled(true);
     }
 
     private void loadToken() {
@@ -300,5 +369,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private File createImageFile() throws IOException {
+        //Skapar en fil att spara bilden i
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+
+        ///Sparar pathen så den kan användas sen
+        capturedImage = image.getAbsolutePath();
+        return image;
     }
 }

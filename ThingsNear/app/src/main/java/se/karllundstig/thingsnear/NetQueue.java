@@ -61,6 +61,10 @@ public class NetQueue {
         return token;
     }
 
+    public String getServer() {
+        return server;
+    }
+
     public long getServerDelta() {
         return serverDelta;
     }

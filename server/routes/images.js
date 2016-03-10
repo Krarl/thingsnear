@@ -19,11 +19,8 @@ router.route('/')
         });
     })
 
-    //.post(auth.verify)
+    .post(auth.verify)
     .post(function(req, res) {
-        //skapa först bilden i databasen
-        //spara den sen i en imagemapp med id från databasen
-
         async.waterfall([
             //tar emot filen
             function(callback) {
@@ -75,7 +72,9 @@ router.route('/')
         ], function(err) {
             if (err) {
                 //tar bort filen, om den skapats
-                fs.unlink(req.file.path, function(err) {});
+                if (req.file) {
+                    fs.unlink(req.file.path, function(err) {});
+                }
                 res.status(500).json({ success: false, error: err });
             } else {
                 res.status(200).json({ success: true });
@@ -88,9 +87,9 @@ router.get('/:id', function(req, res) {
         //hämtar den från databasen
         function(callback) {
             Image.findById(req.params.id, function(err, image) {
-                if (err | !image) {
+                if (err || !image) {
                     log.error('Database error: ' + err);
-                    callback(err);
+                    callback('Database error');
                 } else {
                     callback(null, image);
                 }
