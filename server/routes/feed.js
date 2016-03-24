@@ -53,8 +53,8 @@ router.route('/')
                 $maxDistance: 10000
             }}
         })
-        .skip(req.query.skip)
         .sort({ date: -1 })
+        .skip(req.query.skip)
         .populate('creator', '-password')
         .exec(function(err, posts) {
             if (err)
